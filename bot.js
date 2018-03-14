@@ -6,7 +6,7 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-    if (message.content === 'ping') {
+    if (message.content === 'ping' && message.author.tag === "#4590") {
         message.reply('pong');
     }
 });
