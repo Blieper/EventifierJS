@@ -1,5 +1,5 @@
 const discord = require('discord');
-const client = new Discord.Client();
+const client = new discord.Client();
 
 client.on('ready', () => {
     console.log('Bot ready!');
