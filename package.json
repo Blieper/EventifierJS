@@ -1,0 +1,13 @@
+{
+  "name": "eventifierjs",
+  "version": "0.0.1",
+  "description": "Eventifier JS",
+  "main": "bot.js",
+  "dependencies": {
+    "discord": "^0.8.2",
+    "request": "^2.85.0"
+  },
+  "scripts": {
+    "start": "node bot.js"
+  }
+}
