@@ -1,14 +1,19 @@
-const discord = require('discord.js');
-const client = new discord.Client();
+app = {};
+
+app.discord   = require('discord.js');
+const client  = app.client = new app.discord.Client();
+app.commands  = require('./modules/commands');
+app.mongoDB   = require('./modules/mongo')
+
+app.mongoDB.init(app);
+app.commands.init(app);
 
 client.on('ready', () => {
     console.log('Bot ready!');
 });
 
 client.on('message', message => {
-    if (message.content === 'ping' && message.author.tag === "#4590") {
-        message.reply('pong');
-    }
+    app.checkCommands(message);
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login('NDA5MDYxNTIyNTE4ODM1MjAw.DYskAA.9ybs1_qApvuf7tFIoRPOYHTSAmg');
