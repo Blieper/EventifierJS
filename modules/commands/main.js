@@ -2,6 +2,7 @@ exports.init = function (app) {
 
     app.registerNamespace ('std', {
         whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
+        roles: ['Eventifier Tester'],
         description: `Standard functions`
     });
 
@@ -12,6 +13,8 @@ You can probably see what it does already.`
     }, x => {
         let namespaces = app.namespaces;
         let user = x.message.author;
+
+        console.log(user);
 
         if (x.string.length == 0) {
             let embed = {
@@ -26,6 +29,13 @@ You can probably see what it does already.`
             for (i in namespaces) {
 
                 let namespace = namespaces[i];
+
+                // Role check
+                if (namespace.settings.roles.length > 0) {
+                    if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                        return
+                    } 
+                }
 
                 // Whitelist check
                 if (namespace.settings.whitelist.length > 0) {
@@ -85,6 +95,12 @@ You can probably see what it does already.`
             for (cmd in commands) {
                 let command = commands[cmd];
 
+                // Role check
+                if (namespace.settings.roles.length > 0) {
+                    if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                        return
+                    } 
+                }
                 // Whitelist check
                 if (command.settings.whitelist.length > 0) {
                     if (command.settings.whitelist.indexOf(user.id) === -1) {

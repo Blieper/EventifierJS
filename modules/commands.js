@@ -8,13 +8,13 @@ exports.init = function (app) {
         app.namespaces[namespace] = {
             name: namespace,
             settings: {},
-            description: settings.description,   
-            commands: []         
+            description: settings.description,
+            commands: []
         }
 
         let cmdset = app.namespaces[namespace].settings;
         cmdset.whitelist = settings.whitelist || [];
-        cmdset.roles     = settings.roles || [];
+        cmdset.roles = settings.roles || [];
 
         console.log('New namespace registered: ' + JSON.stringify(app.namespaces[namespace]));
     }
@@ -32,10 +32,10 @@ exports.init = function (app) {
 
         let cmdset = app.namespaces[namespace].commands[command].settings;
 
-        cmdset.whitelist        = settings.whitelist || [];
-        cmdset.useSingleString  = true;
-        cmdset.roles            = settings.roles || [];
- 
+        cmdset.whitelist = settings.whitelist || [];
+        cmdset.useSingleString = true;
+        cmdset.roles = settings.roles || [];
+
         if (app.namespaces[namespace].commands[command].pars !== undefined) {
             cmdset.useSingleString = false;
         }
@@ -50,8 +50,6 @@ exports.init = function (app) {
             return;
         }
 
-        console.log(smessage);
-
         for (i in app.namespaces) {
             let namespace = app.namespaces[i];
 
@@ -60,6 +58,13 @@ exports.init = function (app) {
                 let user = message.author;
 
                 smessage = smessage.substring(namespace.name.length + 1);
+
+                // Role check
+                if (namespace.settings.roles.length > 0) {
+                    if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                        return
+                    } 
+                }
 
                 // Whitelist check
                 if (namespace.settings.whitelist.length > 0) {
@@ -73,6 +78,13 @@ exports.init = function (app) {
 
                     // Namespace found!
                     if (smessage.search(command.name) === 0) {
+                        // Role check
+                        if (command.settings.roles.length > 0) {
+                            if (!message.member.roles.some(r => command.settings.roles.includes(r.name))) {
+                                return
+                            } 
+                        }
+
                         // Whitelist check
                         if (command.settings.whitelist.length > 0) {
                             if (command.settings.whitelist.indexOf(user.id) === -1) {
@@ -164,7 +176,9 @@ exports.init = function (app) {
 
                         // Set message object and aftercommand string
                         input.message = message;
-                        input.string =  afterCommand;
+                        input.string = afterCommand;
+
+                        console.log(input);
 
                         // Call function
                         command.callback(input);
