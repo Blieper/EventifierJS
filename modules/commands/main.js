@@ -6,6 +6,55 @@ exports.init = function (app) {
         description: `Standard functions`
     });
 
+    app.registerCommand('std','removeChannel', {
+        pars: [
+            {name: 'id'}
+        ],
+        roles: ['Administrator'],
+        description:
+            `Removes the given channel`
+    }, x => {
+        let guild = x.message.guild;
+
+        x.message.channel.send({
+            embed: {
+                color: 16318549,
+                title: "Searching!",
+                description: "Looking for channel " + x.id + "...",
+            }
+        });
+
+        let channel = guild.channels.find(val => val.id === x.id)
+
+        if (channel) {
+            x.message.channel.send({
+                embed: {
+                    color: 16318549,
+                    title: "Deleting!",
+                    description: "Deleting channel " + x.id + "...",
+                }
+            })
+
+            channel.delete().then(x => {
+                x.message.channel.send({
+                    embed: {
+                        color: 16318549,
+                        title: "Success!",
+                        description: "Channel removed!",
+                    }
+                })
+            });            
+        } else {
+            x.message.channel.send({
+                embed: {
+                    color: 16318549,
+                    title: "Error!",
+                    description: "Couldn't find channel!",
+                }
+            })
+        }
+    });
+
     app.registerCommand('std','help', {
         description:
             `This is the command you just used.
@@ -13,8 +62,6 @@ You can probably see what it does already.`
     }, x => {
         let namespaces = app.namespaces;
         let user = x.message.author;
-
-        console.log(user);
 
         if (x.string.length == 0) {
             let embed = {

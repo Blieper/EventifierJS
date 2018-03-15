@@ -63,7 +63,7 @@ exports.init = function (app) {
                 if (namespace.settings.roles.length > 0) {
                     if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
-                    } 
+                    }
                 }
 
                 // Whitelist check
@@ -82,7 +82,7 @@ exports.init = function (app) {
                         if (command.settings.roles.length > 0) {
                             if (!message.member.roles.some(r => command.settings.roles.includes(r.name))) {
                                 return
-                            } 
+                            }
                         }
 
                         // Whitelist check
@@ -100,16 +100,57 @@ exports.init = function (app) {
 
                         if (!command.settings.useSingleString) {
                             try {
+                                let isInMarkdown = false;
+                                let isInQuote = false;
+
+                                let argsJSONString = afterCommand;
+
+                                // Cleanup new line characters 
+                                for (i = argsJSONString.length-1; i > 0; i--) {
+                                    let mdLookAhead = argsJSONString[i] + argsJSONString[i - 1] + argsJSONString[i - 2];
+                                    if (mdLookAhead === "```") {
+                                        isInMarkdown = !isInMarkdown;
+                                        i -= 2;
+                                        continue;
+                                    } else if (argsJSONString[i] === "'") {
+                                        isInQuote = !isInQuote;
+                                        continue;
+                                    }
+
+                                    if (!isInQuote && !isInMarkdown) {
+                                        if (argsJSONString[i] === "\n") {
+                                            let left = argsJSONString.substring(0,i);
+                                            let right = argsJSONString.substring(i+1);
+
+                                            console.log('left: ' + left);
+                                            console.log('right: ' + right);
+                                        
+                                            argsJSONString = left + right;
+                                            i--;
+                                        }
+                                    }
+                                }
+
                                 // Quote elements in string
-                                let argsJSONString = afterCommand.replace(/[^:,()\s][\w\s\d]*/g, function (x) {
+                                argsJSONString = argsJSONString.replace(/('(.|\n)*')|(```(.|\n)*```)|([^:,()\s][\w\s\d]*)/g, function (x) {
                                     let ret = '"' + x + '"';
                                     return ret;
                                 });
+
+                                argsJSONString = argsJSONString.replace(/\n/g, '\\n');
 
                                 // Get JSON object
                                 argsJSONString = '{' + argsJSONString + '}';
 
                                 let json = JSON.parse(argsJSONString);
+
+                                for (j in json) {
+                                    if (json[j].startsWith("'") && json[j].endsWith("'")) {
+                                        json[j] = json[j].substring(1, json[j].length - 1);
+                                    } else if (json[j].startsWith("```") && json[j].endsWith("```")) {
+                                        json[j] = json[j].substring(3, json[j].length - 3);
+                                    }
+                                }
 
                                 // Set input to the json object
                                 input = json;
@@ -160,6 +201,7 @@ exports.init = function (app) {
                                     return;
                                 }
                             } catch (err) {
+                                console.log(err);
 
                                 // JSON object could not be created due to bad formatting
                                 message.channel.send({
@@ -177,8 +219,6 @@ exports.init = function (app) {
                         // Set message object and aftercommand string
                         input.message = message;
                         input.string = afterCommand;
-
-                        console.log(input);
 
                         // Call function
                         command.callback(input);

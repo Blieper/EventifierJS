@@ -1,12 +1,12 @@
 exports.init = function (app) {
 
-    app.registerNamespace ('event', {
-        whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
+    app.registerNamespace('event', {
+        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         description: `This namespace is dedicated to event commands.`
     });
 
     app.registerCommand('event', 'delete', {
-        whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
+        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
             { name: "name" }
         ],
@@ -17,14 +17,14 @@ This will get rid of it's channels.`
         let dbo = app.db.db('eventifierjs');
 
         if (!guild) {
-            x.message.channel.send({ 
+            x.message.channel.send({
                 embed: {
                     color: 16318549,
                     title: "Event error!",
                     description: "Couldn't find server. Are you doing this in a DM chat?",
                 }
-            }); 
-            
+            });
+
             return;
         }
 
@@ -102,7 +102,7 @@ This will get rid of it's channels.`
     });
 
     app.registerCommand('event', 'create', {
-        whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
+        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
             { name: "name" }
         ],
@@ -119,8 +119,8 @@ Automatically makes a voice, general and host channel inside a special category.
                     title: "Event error!",
                     description: "Couldn't find server. Are you doing this in a DM chat?",
                 }
-            }); 
-            
+            });
+
             return;
         }
 
@@ -182,7 +182,9 @@ Automatically makes a voice, general and host channel inside a special category.
                                                         let doc = {
                                                             userid: x.message.author.id,
                                                             name: x.name,
-                                                            channelData: eventChannelData
+                                                            channelData: eventChannelData,
+                                                            description: x.description,
+                                                            isEvent: true
                                                         }
 
                                                         dbo.collection('events').insertOne(doc, function (err, res) {
@@ -209,4 +211,46 @@ Automatically makes a voice, general and host channel inside a special category.
         });
     });
 
+    app.registerCommand('event', 'list', {
+        description: `Lists all of the current events.`
+    }, x => {
+        let dbo = app.db.db('eventifierjs');
+
+        let embed = {
+            embed: {
+                color: 16318549,
+                title: "Events",
+                description: "All current events that are currently being hosted",
+                fields: [],
+            }
+        };
+
+        // try to find current events
+        dbo.collection("events").find({ isEvent: true }, { _id: 0, userid: 1, name: 1 }).toArray(function (err, result) {
+            if (err) throw err;
+
+            for (event of result) {
+                let textObject = ""
+
+                textObject += "**Name**\n\t";
+                textObject += event.name || "-";
+                textObject += "\n\n";
+
+                if (event.description) {
+                    textObject += "**Description**\n\t";
+                    textObject += event.description.replace(/\n/g, "\n\t");
+                    textObject += "\n\n";
+                }
+
+                textObject += "\n"
+
+                embed.embed.fields.push({
+                    name: "--------------------------------------------------------------------------------------------",
+                    value: textObject
+                })
+            }
+
+            x.message.author.send(embed);
+        });
+    });
 }
