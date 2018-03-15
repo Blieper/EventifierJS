@@ -53,7 +53,7 @@ You can probably see what it does already.`
                 textObject += "**Parameters**\n";
 
                 for (par of command.pars) {
-                    textObject += "\t" + par.name + "\t(" + par.type;
+                    textObject += "\t" + par.name + "\t(" + (par.type || 'string');
                     if (par.optional) {
                         textObject += ", optional"
                     }

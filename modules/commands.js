@@ -49,13 +49,16 @@ exports.init = function (app) {
                 if (!command.settings.useSingleString) {
                     try {
                         // Quote elements in string
-                        let argsJSONString = afterCommand.replace(/\w+/g, function (x) {
+                        let argsJSONString = afterCommand.replace(/[^:,()\s][\w\s\d]*/g, function (x) {
                             let ret = '"' + x + '"';
                             return ret;
                         });
 
                         // Get JSON object
                         argsJSONString = '{' + argsJSONString + '}';
+
+                        console.log('parsing: ' + argsJSONString);
+
                         let json = JSON.parse(argsJSONString);
 
                         // Set input to the json object
@@ -96,7 +99,7 @@ exports.init = function (app) {
 
                         // Error in the parameters
                         if (hasError) {
-                            message.reply({
+                            message.channel.send({
                                 embed: {
                                     color: 16318549,
                                     title: "Command error!",
@@ -109,7 +112,7 @@ exports.init = function (app) {
                     } catch (err) {
 
                         // JSON object could not be created due to bad formatting
-                        message.reply({
+                        message.channel.send({
                             embed: {
                                 color: 16318549,
                                 title: "Error!",
