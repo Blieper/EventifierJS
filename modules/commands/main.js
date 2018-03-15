@@ -78,8 +78,8 @@ You can probably see what it does already.`
                 let namespace = namespaces[i];
 
                 // Role check
-                if (namespace.settings.roles.length > 0) {
-                    if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                if (namespace.settings.roles.length > 0 && message.guild) {
+                    if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
                     } 
                 }
@@ -143,8 +143,8 @@ You can probably see what it does already.`
                 let command = commands[cmd];
 
                 // Role check
-                if (namespace.settings.roles.length > 0) {
-                    if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                if (namespace.settings.roles.length > 0 && message.guild) {
+                    if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
                     } 
                 }

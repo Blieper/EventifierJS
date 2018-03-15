@@ -60,7 +60,7 @@ exports.init = function (app) {
                 smessage = smessage.substring(namespace.name.length + 1);
 
                 // Role check
-                if (namespace.settings.roles.length > 0) {
+                if (namespace.settings.roles.length > 0 && message.guild) {
                     if (!message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
                     }
@@ -79,7 +79,7 @@ exports.init = function (app) {
                     // Namespace found!
                     if (smessage.search(command.name) === 0) {
                         // Role check
-                        if (command.settings.roles.length > 0) {
+                        if (command.settings.roles.length > 0 && message.guild) {
                             if (!message.member.roles.some(r => command.settings.roles.includes(r.name))) {
                                 return
                             }
@@ -98,39 +98,35 @@ exports.init = function (app) {
                         // Initiate input object
                         let input = {};
 
+                        let argsJSONString = afterCommand;
+                        let isInMarkdown = false;
+                        let isInQuote = false;
+
+                        // Cleanup new line characters 
+                        for (i = argsJSONString.length-1; i > 0; i--) {
+                            let mdLookAhead = argsJSONString[i] + argsJSONString[i - 1] + argsJSONString[i - 2];
+                            if (mdLookAhead === "```") {
+                                isInMarkdown = !isInMarkdown;
+                                i -= 2;
+                                continue;
+                            } else if (argsJSONString[i] === "'") {
+                                isInQuote = !isInQuote;
+                                continue;
+                            }
+
+                            if (!isInQuote && !isInMarkdown) {
+                                if (argsJSONString[i] === "\n") {
+                                    let left = argsJSONString.substring(0,i);
+                                    let right = argsJSONString.substring(i+1);
+                                
+                                    argsJSONString = left + right;
+                                    i--;
+                                }
+                            }
+                        }
+
                         if (!command.settings.useSingleString) {
                             try {
-                                let isInMarkdown = false;
-                                let isInQuote = false;
-
-                                let argsJSONString = afterCommand;
-
-                                // Cleanup new line characters 
-                                for (i = argsJSONString.length-1; i > 0; i--) {
-                                    let mdLookAhead = argsJSONString[i] + argsJSONString[i - 1] + argsJSONString[i - 2];
-                                    if (mdLookAhead === "```") {
-                                        isInMarkdown = !isInMarkdown;
-                                        i -= 2;
-                                        continue;
-                                    } else if (argsJSONString[i] === "'") {
-                                        isInQuote = !isInQuote;
-                                        continue;
-                                    }
-
-                                    if (!isInQuote && !isInMarkdown) {
-                                        if (argsJSONString[i] === "\n") {
-                                            let left = argsJSONString.substring(0,i);
-                                            let right = argsJSONString.substring(i+1);
-
-                                            console.log('left: ' + left);
-                                            console.log('right: ' + right);
-                                        
-                                            argsJSONString = left + right;
-                                            i--;
-                                        }
-                                    }
-                                }
-
                                 // Quote elements in string
                                 argsJSONString = argsJSONString.replace(/('(.|\n)*')|(```(.|\n)*```)|([^:,()\s][\w\s\d]*)/g, function (x) {
                                     let ret = '"' + x + '"';
@@ -218,7 +214,7 @@ exports.init = function (app) {
 
                         // Set message object and aftercommand string
                         input.message = message;
-                        input.string = afterCommand;
+                        input.string = afterCommand.trim();
 
                         // Call function
                         command.callback(input);
