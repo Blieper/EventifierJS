@@ -1,6 +1,11 @@
 exports.init = function (app) {
 
-    app.registerCommand('deleteevent', {
+    app.registerNamespace ('event', {
+        whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
+        description: `This namespace is dedicated to event commands.`
+    });
+
+    app.registerCommand('event', 'delete', {
         whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
         pars: [
             { name: "name" }
@@ -12,7 +17,7 @@ This will get rid of it's channels.`
         let dbo = app.db.db('eventifierjs');
 
         if (!guild) {
-            x.message.channel.send({
+            x.message.channel.send({ 
                 embed: {
                     color: 16318549,
                     title: "Event error!",
@@ -96,7 +101,7 @@ This will get rid of it's channels.`
         });
     });
 
-    app.registerCommand('eventcreate', {
+    app.registerCommand('event', 'create', {
         whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
         pars: [
             { name: "name" }
