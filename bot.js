@@ -5,6 +5,8 @@ const client  = app.client = new app.discord.Client();
 app.commands  = require('./modules/commands');
 app.mongoDB   = require('./modules/mongo')
 
+console.log(app.discord.Permissions);
+
 app.mongoDB.init(app);
 app.commands.init(app);
 

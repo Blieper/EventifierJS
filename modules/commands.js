@@ -2,16 +2,36 @@
 exports.prefix = '!';
 
 exports.init = function (app) {
+    app.isHelping = [];
     app.namespaces = [];
 
-    app.commandFeedback = function (msg, err, type) {
+    app.commandFeedback = function (msg, err, opt) {
+        if (!opt) {
+            opt = {}
+        }
+
+        console.log(JSON.stringify(opt));
+
         msg.channel.send({
             embed: {
                 color: 16318549,
-                title: type || "Error!",
+                title: opt.type || "Error!",
                 description: err,
             }
         });
+
+        if (!opt.type) {
+            console.log('enabling help');
+            app.isHelping[msg.author.id] = false;
+            return;
+        }
+
+        if (opt.end) {
+            if (opt.end === true) {
+                console.log('enabling help');
+                app.isHelping[msg.author.id] = false;
+            }
+        }
     }
 
     app.registerNamespace = function (namespace, settings) {
@@ -66,6 +86,14 @@ exports.init = function (app) {
             // Namespace found!
             if (smessage.search(namespace.name) === 0) {
                 let user = message.author;
+
+                if (app.isHelping[user.id] === true) {
+                    console.log('Already helping you!');
+
+                    return;
+                }
+                
+                app.isHelping[user.id] = true;
 
                 smessage = smessage.substring(namespace.name.length + 1);
 

@@ -16,20 +16,43 @@ exports.init = function (app) {
     }, x => {
         let guild = x.message.guild;
 
-        app.commandFeedback(x.message,"Looking for channel " + x.id + "...",'Searching!')
+        app.commandFeedback(x.message,"Looking for channel " + x.id + "...",{type: 'Searching!'})
 
         let channel = guild.channels.find(val => val.id === x.id)
 
         if (channel) {
-            app.commandFeedback(x.message,"Deleting channel " + x.id + "...",'Deleting!')
+            app.commandFeedback(x.message,"Deleting channel " + x.id + "...",{type: 'Deleting!'})
 
             channel.delete().then(x => {
-                app.commandFeedback(x.message,"Channel removed!",'Success!')
+                app.commandFeedback(x.message,"Channel removed!",{end: true, type: 'Callback!'})
             });            
         } else {
             app.commandFeedback(x.message,"Couldn't find channel!")
         }
     });
+
+
+    app.registerCommand('std','debugChannel', {
+        pars: [
+            {name: 'id'}
+        ],
+        roles: ['Administrator'],
+        description:
+            `Prints debug info for the given channel`
+    }, x => {
+        let guild = x.message.guild;
+
+        app.commandFeedback(x.message,"Looking for channel " + x.id + "...",{type: 'Searching!'})
+
+        let channel = guild.channels.find(val => val.id === x.id)
+
+        if (channel) {
+            console.log(channel);        
+        } else {
+            app.commandFeedback(x.message,"Couldn't find channel!")
+        }
+    });
+
 
     app.registerCommand('std','help', {
         description:
@@ -54,7 +77,7 @@ You can probably see what it does already.`
                 let namespace = namespaces[i];
 
                 // Role check
-                if (namespace.settings.roles.length > 0 && message.guild) {
+                if (namespace.settings.roles.length > 0 && x.message.guild) {
                     if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
                     } 
