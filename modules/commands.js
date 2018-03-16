@@ -190,6 +190,25 @@ exports.init = function (app) {
                                 // Get pars from the command
                                 let pars = command.pars;
 
+                                // Check for pars that are not meant to be there
+                                for (i of Object.keys(json)) {
+                                    let exists = false;
+
+                                    for (par of pars) {
+                                        let name = par.name;
+
+                                        if (name === i) {
+                                            exists = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!exists) {
+                                        app.commandFeedback(message, "Unexpected argument found: '" + i + "'");
+                                        return;
+                                    }
+                                }
+
                                 // Check if pars are correct
                                 for (par of pars) {
                                     let name = par.name;

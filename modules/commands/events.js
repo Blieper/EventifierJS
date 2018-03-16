@@ -74,8 +74,7 @@ This will get rid of it's channels.`
 
                             dbo.collection("events").deleteOne({ name: result.name }, function (err, obj) {
                                 if (err) throw err;
-                                console.log("1 document deleted");
-
+                                
                                 app.commandFeedback(x.message, 'Successfully deleted event from database!', {end: true, type: "Callback!"});
                             });
                         }).catch(err => {
@@ -111,8 +110,6 @@ Automatically makes a voice, general and host channel inside a special category.
 
             if (result) {
                 // Don't do anything if the user is found
-                console.log('Event from user found! (' + result.name + ')');
-
                 app.commandFeedback(x.message, "It seems like you're already hosting an event. (" + result.name + ")");
             } else {
                 // try to find event with the same name
@@ -121,17 +118,18 @@ Automatically makes a voice, general and host channel inside a special category.
 
                     if (result) {
                         // Don't do anything if the user is found
-                        console.log('An event with that name already exists! (' + result.name + ')');
-
                         app.commandFeedback(x.message, 'An event with that name already exists! (' + result.name + ')');
                     } else {
                         let name = x.name.replace(/\s/, '-');
 
                         let eventData = {}
 
+                        eventData.hosts = [x.message.author.id];
+                        eventData.color = x.color || Math.floor(Math.random()*16777215);
+
                         // Create a new contestant role
                         guild.createRole({
-                            name: x.name + ' Host', color: 'BLUE',
+                            name: x.name + ' Host', color: eventData.color,
                         }).then(role => {
                             eventData.hostrole = role.id;
 
@@ -140,7 +138,7 @@ Automatically makes a voice, general and host channel inside a special category.
                             // Create a new contestant role
                             return guild.createRole({
                                 name: x.name,
-                                color: 'BLUE',
+                                color: eventData.color,
                             })
                         }).then(role => {
                             eventData.role = role.id;
@@ -207,15 +205,13 @@ Automatically makes a voice, general and host channel inside a special category.
                                 name: x.name,
                                 eventData: eventData,
                                 description: x.description,
-                                isEvent: true
+                                isEvent: true,
                             }
 
                             dbo.collection('events').insertOne(doc, function (err, res) {
                                 if (err) throw err;
 
                                 app.commandFeedback(x.message, "New event called '" + x.name + "' created!", {end: true, type: "Callback!"});
-
-                                console.log("1 document inserted: \n" + res);
                             });
                         });
                     }
