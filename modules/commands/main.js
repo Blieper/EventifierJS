@@ -142,7 +142,7 @@ You can probably see what it does already.`
                 let command = commands[cmd];
 
                 // Role check
-                if (namespace.settings.roles.length > 0 && message.guild) {
+                if (namespace.settings.roles.length > 0 && x.message.guild) {
                     if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
                         return
                     } 
@@ -164,9 +164,12 @@ You can probably see what it does already.`
                     textObject += "**Parameters**\n";
 
                     for (par of command.pars) {
-                        textObject += "\t" + par.name + "\t(" + (par.type || 'string');
+                        textObject += "\t" + par.name + "\t\t(" + (par.type || 'string');
                         if (par.optional) {
                             textObject += ", optional"
+                        }
+                        if (par.pattern) {
+                            textObject += ", pattern: " + par.pattern.replace(/\n/g,'\\n')
                         }
 
                         textObject += ")\n";

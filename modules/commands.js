@@ -214,7 +214,7 @@ exports.init = function (app) {
                                     let name = par.name;
                                     let type = par.type || 'string';
                                     let optional = par.optional || false;
-                                    let pattern = par.pattern ? new RegExp(par.pattern, "g") : null;
+                                    let pattern = par.pattern || null;
 
                                     //find in query
                                     let inQuery = queried[name];
@@ -225,8 +225,14 @@ exports.init = function (app) {
                                         continue;
                                     }
 
+                                    if (optional && inQuery == undefined) {
+                                        continue;
+                                    }
+
                                     if (pattern) {
-                                        if (pattern.test(inQuery)) {
+                                        console.log(pattern);
+
+                                        if (!pattern.test(inQuery)) {
                                             parErr += '\tParameter \'' + name + '\' does not match required pattern!';
                                             hasError = true;
                                             continue;

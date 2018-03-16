@@ -37,7 +37,7 @@ This will get rid of it's channels.`
             if (err) throw err;
 
             if (result) {
-                app.commandFeedback(x.message, 'Deleting event... (' + result.name + ')', {type: "Callback!"});
+                app.commandFeedback(x.message, 'Deleting event... (' + result.name + ')', { type: "Callback!" });
 
                 let channel = guild.channels.find(val => val.id === result.eventData.general)
                 if (channel) {
@@ -61,21 +61,21 @@ This will get rid of it's channels.`
                             let role = guild.roles.get(result.eventData.role);
                             if (role) {
                                 role.delete()
-                                app.commandFeedback(x.message, 'Deleting role...', {type: "Callback!"});
+                                app.commandFeedback(x.message, 'Deleting role...', { type: "Callback!" });
                             }
                         }).then(() => {
                             let role = guild.roles.get(result.eventData.hostrole);
                             if (role) {
                                 role.delete()
-                                app.commandFeedback(x.message, 'Deleting host role...', {type: "Callback!"});
+                                app.commandFeedback(x.message, 'Deleting host role...', { type: "Callback!" });
                             }
                         }).then(() => {
-                            app.commandFeedback(x.message, 'Successfully deleted channels! (' + result.name + ')', {type: "Callback!"});
+                            app.commandFeedback(x.message, 'Successfully deleted channels! (' + result.name + ')', { type: "Callback!" });
 
                             dbo.collection("events").deleteOne({ name: result.name }, function (err, obj) {
                                 if (err) throw err;
-                                
-                                app.commandFeedback(x.message, 'Successfully deleted event from database!', {end: true, type: "Callback!"});
+
+                                app.commandFeedback(x.message, 'Successfully deleted event from database!', { end: true, type: "Callback!" });
                             });
                         }).catch(err => {
                             app.commandFeedback(x.message, 'Error while deleting channels (' + result.name + ')');
@@ -90,7 +90,9 @@ This will get rid of it's channels.`
     app.registerCommand('event', 'create', {
         whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
-            { name: "name", pattern: "[^\n][\w\d\s']+" }
+            { name: "name", pattern: /[\w\d' ]{4,}/g },
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/},
+            { name: "description", optional: true },
         ],
         description: `Creates an event with the name 'name'. 
 Automatically makes a voice, general and host channel inside a special category.`
@@ -125,7 +127,7 @@ Automatically makes a voice, general and host channel inside a special category.
                         let eventData = {}
 
                         eventData.hosts = [x.message.author.id];
-                        eventData.color = x.color || Math.floor(Math.random()*16777215);
+                        eventData.color = x.color || Math.floor(Math.random() * 16777215);
 
                         // Create a new contestant role
                         guild.createRole({
@@ -211,11 +213,120 @@ Automatically makes a voice, general and host channel inside a special category.
                             dbo.collection('events').insertOne(doc, function (err, res) {
                                 if (err) throw err;
 
-                                app.commandFeedback(x.message, "New event called '" + x.name + "' created!", {end: true, type: "Callback!"});
+                                app.commandFeedback(x.message, "New event called '" + x.name + "' created!", { end: true, type: "Callback!" });
                             });
                         });
                     }
                 });
+            }
+        });
+    });
+
+    app.registerCommand('event', 'set', {
+        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
+        pars: [
+            { name: "name" },
+            { name: "newname", optional: true, pattern: /[\w\d' ]{4,}/g },
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/},
+            { name: "description", optional: true },
+        ],
+        description: `Sets the given items of the specified event.`
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let channel = guild.channels.find(val => val.id === result.eventData.category)
+                let cloneQuery = { name: x.newname || x.name }
+
+                // try to find event with the same name
+                dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+                    if (err) throw err;
+
+                    if (result) {
+                        let cloneQuery = { name: x.newname || "@" }
+
+                        // Check if user is a host
+                        if (result.eventData.hosts.indexOf(x.message.author.id) === -1) {
+                            app.commandFeedback(x.message, 'You are not a host of that event!');
+
+                            return;
+                        }
+
+                        let event = result;
+
+                        // try to find event with the same new name
+                        dbo.collection('events').findOne(cloneQuery, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+                            if (err) throw err;
+
+                            if (result) {
+                                // Don't do anything if an event with the same name is found
+                                app.commandFeedback(x.message, 'An event with that name already exists! (' + result.name + ')');
+                            } else {
+                                let category = guild.channels.find(val => val.id === event.eventData.category);
+                                let hostrole = guild.roles.get(event.eventData.hostrole);
+                                let role = guild.roles.get(event.eventData.role);
+
+                                let newvalues = { $set: {} };
+
+                                if (x.color) {
+                                    newvalues.$set.color = x.color;
+
+                                    // Set the color of the role
+                                    role.setColor(x.color)
+                                        .then(updated => console.log(`Set color of role to ${role.color}`))
+                                        .catch(console.error);
+
+                                    // Set the color of the role
+                                    hostrole.setColor(x.color)
+                                        .then(updated => console.log(`Set color of host role to ${role.color}`))
+                                        .catch(console.error);
+                                }
+
+                                if (x.newname) {
+                                    newvalues.$set.name = x.newname;
+
+                                    // Set the name of the role
+                                    role.setName(x.newname)
+                                        .then(updated => console.log(`Edited role name from ${role.name} to ${updated.name}`))
+                                        .catch(console.error);
+
+                                    // Set the name of the host role
+                                    hostrole.setName(x.newname + ' Host')
+                                        .then(updated => console.log(`Edited host role name from ${role.name} to ${updated.name}`))
+                                        .catch(console.error);
+
+                                    category.setName(x.newname)
+                                        .then(updated => console.log(`Edited category name from ${category.name} to ${updated.name}`))
+                                        .catch(console.error);
+                                }
+
+                                if (x.description) {
+                                    newvalues.$set.description = x.description;
+                                }
+
+                                dbo.collection("events").updateOne({ name: event.name }, newvalues, function (err, res) {
+                                    if (err) throw err;
+                                    app.commandFeedback(x.message, 'Updated event items!', { end: true, type: 'Callback!' });
+                                });
+                            }
+                        });
+                    } else {
+                        app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+                    }
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
             }
         });
     });
