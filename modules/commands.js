@@ -4,6 +4,16 @@ exports.prefix = '!';
 exports.init = function (app) {
     app.namespaces = [];
 
+    app.commandFeedback = function (msg, err, type) {
+        msg.channel.send({
+            embed: {
+                color: 16318549,
+                title: type || "Error!",
+                description: err,
+            }
+        });
+    }
+
     app.registerNamespace = function (namespace, settings) {
         app.namespaces[namespace] = {
             name: namespace,
@@ -93,14 +103,13 @@ exports.init = function (app) {
                         }
 
                         // Get string after command
-                        let afterCommand = smessage.substring(command.name.length + 1)
+                        let afterCommand = smessage.substring(command.name.length + 1).trim();
 
                         // Initiate input object
                         let input = {};
 
                         let argsJSONString = afterCommand;
                         let isInMarkdown = false;
-                        let isInQuote = false;
 
                         // Cleanup new line characters 
                         for (i = argsJSONString.length-1; i > 0; i--) {
@@ -109,12 +118,9 @@ exports.init = function (app) {
                                 isInMarkdown = !isInMarkdown;
                                 i -= 2;
                                 continue;
-                            } else if (argsJSONString[i] === "'") {
-                                isInQuote = !isInQuote;
-                                continue;
-                            }
+                            } 
 
-                            if (!isInQuote && !isInMarkdown) {
+                            if (!isInMarkdown) {
                                 if (argsJSONString[i] === "\n") {
                                     let left = argsJSONString.substring(0,i);
                                     let right = argsJSONString.substring(i+1);
@@ -128,11 +134,12 @@ exports.init = function (app) {
                         if (!command.settings.useSingleString) {
                             try {
                                 // Quote elements in string
-                                argsJSONString = argsJSONString.replace(/('(.|\n)*')|(```(.|\n)*```)|([^:,()\s][\w\s\d]*)/g, function (x) {
+                                argsJSONString = argsJSONString.replace(/(```(.|\n)*```)|([^,\s:][\w\d\s\'\"]*[^:,])/g, function (x) {
                                     let ret = '"' + x + '"';
                                     return ret;
                                 });
 
+                                // Change existing line breaks
                                 argsJSONString = argsJSONString.replace(/\n/g, '\\n');
 
                                 // Get JSON object
@@ -141,13 +148,10 @@ exports.init = function (app) {
                                 let json = JSON.parse(argsJSONString);
 
                                 for (j in json) {
-                                    if (json[j].startsWith("'") && json[j].endsWith("'")) {
-                                        json[j] = json[j].substring(1, json[j].length - 1);
-                                    } else if (json[j].startsWith("```") && json[j].endsWith("```")) {
+                                    if (json[j].startsWith("```") && json[j].endsWith("```")) {
                                         json[j] = json[j].substring(3, json[j].length - 3);
                                     }
                                 }
-
                                 // Set input to the json object
                                 input = json;
 
@@ -163,6 +167,7 @@ exports.init = function (app) {
                                     let name = par.name;
                                     let type = par.type || 'string';
                                     let optional = par.optional || false;
+                                    let pattern = par.pattern ? new RegExp(par.pattern, "g") : null;
 
                                     //find in query
                                     let inQuery = queried[name];
@@ -171,6 +176,14 @@ exports.init = function (app) {
                                         parErr += '\tRequired parameter \'' + name + '\' not found!';
                                         hasError = true;
                                         continue;
+                                    }
+
+                                    if (pattern) {
+                                        if (pattern.test(inQuery)) {
+                                            parErr += '\tParameter \'' + name + '\' does not match required pattern!';
+                                            hasError = true;
+                                            continue;
+                                        }
                                     }
 
                                     if (type == "numeric" && Number(inQuery) == NaN) {
@@ -186,27 +199,14 @@ exports.init = function (app) {
 
                                 // Error in the parameters
                                 if (hasError) {
-                                    message.channel.send({
-                                        embed: {
-                                            color: 16318549,
-                                            title: "Command error!",
-                                            description: parErr,
-                                        }
-                                    });
+                                    app.commandFeedback(message, parErr);
 
                                     return;
                                 }
                             } catch (err) {
-                                console.log(err);
-
                                 // JSON object could not be created due to bad formatting
-                                message.channel.send({
-                                    embed: {
-                                        color: 16318549,
-                                        title: "Error!",
-                                        description: "This command needs arguments. Be sure to format this command as:\n'command [key]:[value][, [key]:[value]*]'",
-                                    }
-                                });
+
+                                app.commandFeedback(message, "This command needs arguments. Be sure to format this command as:\n'command [key]:[value][, [key]:[value]*]'");
 
                                 return;
                             }

@@ -8,7 +8,8 @@ exports.init = function (app) {
     app.registerCommand('event', 'delete', {
         whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
-            { name: "name" }
+            { name: "name" , optional: true},
+            { name: "user" , optional: true},
         ],
         description: `Deletes the specified event. 
 This will get rid of it's channels.`
@@ -17,29 +18,25 @@ This will get rid of it's channels.`
         let dbo = app.db.db('eventifierjs');
 
         if (!guild) {
-            x.message.channel.send({
-                embed: {
-                    color: 16318549,
-                    title: "Event error!",
-                    description: "Couldn't find server. Are you doing this in a DM chat?",
-                }
-            });
+            app.commandFeedback(x.message,"Couldn't find server. Are you doing this in a DM chat?");
 
             return;
         }
 
+        let query = {};
+
+        if (x.user) {
+            query = {userid: x.user}
+        } else {
+            query = {name: x.name}
+        }
+
         // try to find event with the same name
-        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, channelData: 1 }, function (err, result) {
+        dbo.collection('events').findOne(query, { _id: 0, userid: 1, name: 1, channelData: 1 }, function (err, result) {
             if (err) throw err;
 
             if (result) {
-                x.message.channel.send({
-                    embed: {
-                        color: 16318549,
-                        title: "Event command!",
-                        description: 'Deleting event... (' + result.name + ')',
-                    }
-                });
+                app.commandFeedback(x.message,'Deleting event... (' + result.name + ')',"Event callback!");
 
                 let channel = guild.channels.find(val => val.id === result.channelData.general)
                 if (channel) {
@@ -60,43 +57,20 @@ This will get rid of it's channels.`
                                 channel.delete()
                             }
                         }).then(() => {
-                            x.message.channel.send({
-                                embed: {
-                                    color: 16318549,
-                                    title: "Event command!",
-                                    description: 'Successfully deleted channels! (' + result.name + ')',
-                                }
-                            })
+                            app.commandFeedback(x.message,'Successfully deleted channels! (' + result.name + ')',"Event callback!");
 
                             dbo.collection("events").deleteOne({ name: result.name }, function (err, obj) {
                                 if (err) throw err;
                                 console.log("1 document deleted");
-                                x.message.channel.send({
-                                    embed: {
-                                        color: 16318549,
-                                        title: "Event callback!",
-                                        description: 'Successfully deleted event from database!',
-                                    }
-                                })
+
+                                app.commandFeedback(x.message,'Successfully deleted event from database!',"Event callback!");
                             });
                         }).catch(err => {
-                            x.message.channel.send({
-                                embed: {
-                                    color: 16318549,
-                                    title: "Event error!",
-                                    description: 'Error while deleting channels (' + result.name + ')',
-                                }
-                            });
+                            app.commandFeedback(x.message,'Error while deleting channels (' + result.name + ')');
                         });
                 }
             } else {
-                x.message.channel.send({
-                    embed: {
-                        color: 16318549,
-                        title: "Event error!",
-                        description: 'No such event found! (' + x.name + ')',
-                    }
-                });
+                app.commandFeedback(x.message,'No such event found! (' + x.name + ')');
             }
         });
     });
@@ -104,7 +78,7 @@ This will get rid of it's channels.`
     app.registerCommand('event', 'create', {
         whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
-            { name: "name" }
+            { name: "name" , pattern: "[^\n][\w\d\s']+"}
         ],
         description: `Creates an event with the name 'name'. 
 Automatically makes a voice, general and host channel inside a special category.`
@@ -113,13 +87,7 @@ Automatically makes a voice, general and host channel inside a special category.
         let dbo = app.db.db('eventifierjs');
 
         if (!guild) {
-            x.message.channel.send({
-                embed: {
-                    color: 16318549,
-                    title: "Event error!",
-                    description: "Couldn't find server. Are you doing this in a DM chat?",
-                }
-            });
+            app.commandFeedback(x.message,"Couldn't find server. Are you doing this in a DM chat?");
 
             return;
         }
@@ -132,13 +100,7 @@ Automatically makes a voice, general and host channel inside a special category.
                 // Don't do anything if the user is found
                 console.log('Event from user found! (' + result.name + ')');
 
-                x.message.channel.send({
-                    embed: {
-                        color: 16318549,
-                        title: "Event error!",
-                        description: "It seems like you're already hosting an event. (" + result.name + ")",
-                    }
-                });
+                app.commandFeedback(x.message,"It seems like you're already hosting an event. (" + result.name + ")");
             } else {
                 // try to find event with the same name
                 dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1 }, function (err, result) {
@@ -148,13 +110,7 @@ Automatically makes a voice, general and host channel inside a special category.
                         // Don't do anything if the user is found
                         console.log('An event with that name already exists! (' + result.name + ')');
 
-                        x.message.channel.send({
-                            embed: {
-                                color: 16318549,
-                                title: "Event error!",
-                                description: 'An event with that name already exists! (' + result.name + ')',
-                            }
-                        });
+                        app.commandFeedback(x.message,'An event with that name already exists! (' + result.name + ')');      
                     } else {
                         let name = x.name.replace(/\s/, '-');
 

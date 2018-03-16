@@ -16,42 +16,18 @@ exports.init = function (app) {
     }, x => {
         let guild = x.message.guild;
 
-        x.message.channel.send({
-            embed: {
-                color: 16318549,
-                title: "Searching!",
-                description: "Looking for channel " + x.id + "...",
-            }
-        });
+        app.commandFeedback(x.message,"Looking for channel " + x.id + "...",'Searching!')
 
         let channel = guild.channels.find(val => val.id === x.id)
 
         if (channel) {
-            x.message.channel.send({
-                embed: {
-                    color: 16318549,
-                    title: "Deleting!",
-                    description: "Deleting channel " + x.id + "...",
-                }
-            })
+            app.commandFeedback(x.message,"Deleting channel " + x.id + "...",'Deleting!')
 
             channel.delete().then(x => {
-                x.message.channel.send({
-                    embed: {
-                        color: 16318549,
-                        title: "Success!",
-                        description: "Channel removed!",
-                    }
-                })
+                app.commandFeedback(x.message,"Channel removed!",'Success!')
             });            
         } else {
-            x.message.channel.send({
-                embed: {
-                    color: 16318549,
-                    title: "Error!",
-                    description: "Couldn't find channel!",
-                }
-            })
+            app.commandFeedback(x.message,"Couldn't find channel!")
         }
     });
 
