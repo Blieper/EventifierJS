@@ -1,19 +1,19 @@
 exports.init = function (app) {
 
     app.registerNamespace('event', {
-        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         description: `This namespace is dedicated to event commands.`,
         roles: ["Eventifier Tester"]
     });
 
     app.registerCommand('event', 'delete', {
-        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
+        roles: ["Administrator"],
         pars: [
             { name: "name", optional: true },
             { name: "user", optional: true },
         ],
         description: `Deletes the specified event. 
-This will get rid of it's channels.`
+This will get rid of it's channels.`,
+        antispam: true
     }, x => {
         let guild = x.message.guild;
         let dbo = app.db.db('eventifierjs');
@@ -88,14 +88,14 @@ This will get rid of it's channels.`
     });
 
     app.registerCommand('event', 'create', {
-        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
             { name: "name", pattern: /[\w\d' ]{4,}/g },
-            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/},
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g},
             { name: "description", optional: true },
         ],
         description: `Creates an event with the name 'name'. 
-Automatically makes a voice, general and host channel inside a special category.`
+Automatically makes a voice, general and host channel inside a special category.`,
+        antispam: true
     }, x => {
         let guild = x.message.guild;
         let dbo = app.db.db('eventifierjs');
@@ -223,14 +223,14 @@ Automatically makes a voice, general and host channel inside a special category.
     });
 
     app.registerCommand('event', 'set', {
-        whitelist: ['205306963444236288', '266640841735405568', '266607839525601281'],
         pars: [
             { name: "name" },
             { name: "newname", optional: true, pattern: /[\w\d' ]{4,}/g },
-            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/},
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g},
             { name: "description", optional: true },
         ],
-        description: `Sets the given items of the specified event.`
+        description: `Sets the given items of the specified event.`,
+        antispam: true
     }, x => {
         let guild = x.message.guild;
         let dbo = app.db.db('eventifierjs');

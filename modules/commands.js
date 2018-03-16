@@ -52,10 +52,12 @@ exports.init = function (app) {
     app.registerCommand = function (namespace, command, settings, callback) {
         app.namespaces[namespace].commands[command] = {
             name: command,
+            namespace: app.namespaces[namespace],
             settings: {},
             callback: callback,
             pars: settings.pars,
-            description: settings.description
+            description: settings.description,
+            antispam: settings.antispam
         };
 
         settings.pars = undefined;
@@ -88,13 +90,9 @@ exports.init = function (app) {
                 let user = message.author;
 
                 if (app.isHelping[user.id] === true) {
-                    console.log('Already helping you!');
-
                     return;
                 }
                 
-                app.isHelping[user.id] = true;
-
                 smessage = smessage.substring(namespace.name.length + 1);
 
                 // Role check
@@ -128,6 +126,10 @@ exports.init = function (app) {
                             if (command.settings.whitelist.indexOf(user.id) === -1) {
                                 return;
                             }
+                        }
+
+                        if (command.antispam) {
+                            app.isHelping[user.id] = true;
                         }
 
                         // Get string after command

@@ -1,7 +1,6 @@
 exports.init = function (app) {
 
     app.registerNamespace ('std', {
-        whitelist: ['205306963444236288', '266640841735405568','266607839525601281'],
         roles: ['Eventifier Tester'],
         description: `Standard functions`
     });
@@ -76,25 +75,33 @@ You can probably see what it does already.`
 
                 let namespace = namespaces[i];
 
-                // Role check
-                if (namespace.settings.roles.length > 0 && x.message.guild) {
-                    if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
-                        return
-                    } 
-                }
+                // // Role check
+                // if (namespace.settings.roles.length > 0 && x.message.guild) {
+                //     console.log(x.message.member.roles.some(r => namespace.settings.roles.includes(r.name)));
 
-                // Whitelist check
-                if (namespace.settings.whitelist.length > 0) {
-                    if (namespace.settings.whitelist.indexOf(user.id) === -1) {
-                        continue;
-                    }
-                }
+                //     if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
+                //         return
+                //     } 
+                // }
+
+                // // Whitelist check
+                // if (namespace.settings.whitelist.length > 0) {
+                //     if (namespace.settings.whitelist.indexOf(user.id) === -1) {
+                //         continue;
+                //     }
+                // }
 
                 let textObject = ""
 
                 textObject += "**Namespace**\n\t";
                 textObject += namespace.name || "-";
-                textObject += "\n\n";
+                textObject += "\n";
+
+                if (namespace.settings.roles.length > 0) {
+                    textObject += "**Usable by:**\n\t";
+                    textObject += namespace.settings.roles.join().replace(/,/g, ", ");
+                    textObject += "\n";
+                }
 
                 if (namespace.description) {
                     textObject += "**Description**\n\t";
@@ -141,40 +148,49 @@ You can probably see what it does already.`
             for (cmd in commands) {
                 let command = commands[cmd];
 
-                // Role check
-                if (namespace.settings.roles.length > 0 && x.message.guild) {
-                    if (!x.message.member.roles.some(r => namespace.settings.roles.includes(r.name))) {
-                        return
-                    } 
-                }
-                // Whitelist check
-                if (command.settings.whitelist.length > 0) {
-                    if (command.settings.whitelist.indexOf(user.id) === -1) {
-                        continue;
-                    }
-                }
+                // // Role check
+                // if (command.settings.roles.length > 0 && x.message.guild) {
+                //     if (!x.message.member.roles.some(r => command.settings.roles.includes(r.name))) {
+                //         return
+                //     } 
+                // }
+
+                // console.log(command);
+
+                // // Whitelist check
+                // if (command.settings.whitelist.length > 0) {
+                //     if (command.settings.whitelist.indexOf(user.id) === -1) {
+                //         continue;
+                //     }
+                // }
 
                 let textObject = ""
 
                 textObject += "**Command**\n\t";
                 textObject += command.name || "-";
-                textObject += "\n\n";
+                textObject += "\n";
 
                 if (command.pars) {
                     textObject += "**Parameters**\n";
 
                     for (par of command.pars) {
-                        textObject += "\t" + par.name + "\t\t(" + (par.type || 'string');
+                        textObject += "\t" + par.name + "\n\t\t(" + (par.type || 'string');
                         if (par.optional) {
                             textObject += ", optional"
                         }
                         if (par.pattern) {
-                            textObject += ", pattern: " + par.pattern.replace(/\n/g,'\\n')
+                            textObject += ", pattern: " + par.pattern//.replace(/\n/g,'\\n')
                         }
 
                         textObject += ")\n";
                     }
 
+                    //textObject += "\n";
+                }
+
+                if (command.settings.roles.length > 0) {
+                    textObject += "**Usable by:**\n\t";
+                    textObject += command.settings.roles.join().replace(/,/g, ", ");
                     textObject += "\n";
                 }
 
