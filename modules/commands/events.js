@@ -90,7 +90,7 @@ This will get rid of it's channels.`,
     app.registerCommand('event', 'create', {
         pars: [
             { name: "name", pattern: /[\w\d' ]{4,}/g },
-            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g},
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g },
             { name: "description", optional: true },
         ],
         description: `Creates an event with the name 'name'. 
@@ -126,7 +126,8 @@ Automatically makes a voice, general and host channel inside a special category.
 
                         let eventData = {}
 
-                        eventData.hosts = [x.message.author.id];
+                        // eventData.hosts = [x.message.author.id];
+                        // eventData.members = [x.message.author.id];
                         eventData.color = x.color || Math.floor(Math.random() * 16777215);
 
                         // Create a new contestant role
@@ -207,6 +208,8 @@ Automatically makes a voice, general and host channel inside a special category.
                                 name: x.name,
                                 eventData: eventData,
                                 description: x.description,
+                                hosts: [x.message.author.id],
+                                members: [x.message.author.id],
                                 isEvent: true,
                             }
 
@@ -226,7 +229,7 @@ Automatically makes a voice, general and host channel inside a special category.
         pars: [
             { name: "name" },
             { name: "newname", optional: true, pattern: /[\w\d' ]{4,}/g },
-            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g},
+            { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g },
             { name: "description", optional: true },
         ],
         description: `Sets the given items of the specified event.`,
@@ -257,7 +260,7 @@ Automatically makes a voice, general and host channel inside a special category.
                         let cloneQuery = { name: x.newname || "@" }
 
                         // Check if user is a host
-                        if (result.eventData.hosts.indexOf(x.message.author.id) === -1) {
+                        if (result.hosts.indexOf(x.message.author.id) === -1) {
                             app.commandFeedback(x.message, 'You are not a host of that event!');
 
                             return;
@@ -324,6 +327,253 @@ Automatically makes a voice, general and host channel inside a special category.
                     } else {
                         app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
                     }
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+            }
+        });
+    });
+
+    app.registerCommand('event', 'join', {
+        pars: [
+            { name: "name" }
+        ],
+        description: `Makes the user join the given event.`,
+        antispam: true
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let cloneQuery = { name: x.newname || x.name }
+
+                // Check if user isn't already in the event
+                if (result.members.indexOf(x.message.author.id) > -1) {
+                    app.commandFeedback(x.message, 'You are already part of that event!');
+
+                    return;
+                }
+
+                let newvalues = { $push: { members: x.message.author.id } };
+
+                x.message.member.addRole(result.eventData.role);
+
+                dbo.collection("events").updateOne({ name: x.name }, newvalues, function (err, res) {
+                    if (err) throw err;
+                    app.commandFeedback(x.message, x.message.author.username + " successfully joined '" + x.name + "'!", { end: true, type: 'Callback!' });
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+            }
+        });
+    });
+
+    app.registerCommand('event', 'leave', {
+        pars: [
+            { name: "name" }
+        ],
+        description: `Makes the user leave the given event, if they're not the original owner.`,
+        antispam: true
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let cloneQuery = { name: x.newname || x.name }
+
+                // Check if the user isn't the original owner
+                if (result.userid === x.message.author.id) {
+                    app.commandFeedback(x.message, "You can't leave the event as the original owner!");
+
+                    return;
+                }
+
+                // Check if user isn't of the event
+                if (result.members.indexOf(x.message.author.id) === -1) {
+                    app.commandFeedback(x.message, "You aren't part of that event!");
+
+                    return;
+                }
+
+                let newvalues = { $pull: { members: x.message.author.id } };
+
+                x.message.member.removeRole(result.eventData.role);
+
+                dbo.collection("events").updateOne({ name: x.name }, newvalues, function (err, res) {
+                    if (err) throw err;
+                    app.commandFeedback(x.message, x.message.author.username + " successfully left '" + x.name + "'!", { end: true, type: 'Callback!' });
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+            }
+        });
+    });
+
+    app.registerCommand('event', 'addHost', {
+        pars: [
+            { name: "name" },
+            { name: "user", patten: /.* \d{4}\b/g }
+        ],
+        description: `Adds a host to the given event`,
+        //antispam: true
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+
+        let targetUser = guild.members.find(val => {
+            return val.user.username + ' ' + val.user.discriminator === x.user;
+        });
+
+        if (!targetUser) {
+            app.commandFeedback(x.message, "User not found!");
+
+            return;            
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let cloneQuery = { name: x.newname || x.name }
+
+                // Check if the user isn't the original owner
+                if (result.userid !== x.message.author.id) {
+                    app.commandFeedback(x.message, "Only the original owner can add hosts!");
+
+                    return;
+                }
+
+                // Check if the user isn't the original owner
+                if (result.userid === targetUser.user.id) {
+                    app.commandFeedback(x.message, targetUser.user.username + " is the original owner of the event!");
+
+                    return;
+                }
+
+                // Check if user isn't of the event
+                if (result.members.indexOf(targetUser.user.id) === -1) {
+                    app.commandFeedback(x.message, targetUser.user.username + " isn't part of that event!");
+
+                    return;
+                }
+
+                // Check if user is a host
+                if (result.hosts.indexOf(targetUser.user.id) > -1) {
+                    app.commandFeedback(x.message, targetUser.user.username + ' is already a host!');
+
+                    return;
+                }
+
+                let newvalues = { $push: { hosts: targetUser.user.id } };
+
+                targetUser.addRole(result.eventData.hostrole);
+
+                dbo.collection("events").updateOne({ name: x.name }, newvalues, function (err, res) {
+                    if (err) throw err;
+                    app.commandFeedback(x.message, targetUser.user.username + " is now a host of '" + result.name + "'!", { end: true, type: 'Callback!' });
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+            }
+        });
+    });
+
+    app.registerCommand('event', 'removeHost', {
+        pars: [
+            { name: "name" },
+            { name: "user", patten: /.* \d{4}\b/g }
+        ],
+        description: `Removes a host of the given event`,
+        //antispam: true
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+        
+        let targetUser = guild.members.find(val => {
+            return val.user.username + ' ' + val.user.discriminator === x.user;
+        });
+
+        if (!targetUser) {
+            app.commandFeedback(x.message, "User not found!");
+
+            return;            
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let cloneQuery = { name: x.newname || x.name }
+
+                // Check if the user isn't the original owner
+                if (result.userid !== x.message.author.id) {
+                    app.commandFeedback(x.message, "Only the original owner can remove hosts!");
+
+                    return;
+                }
+
+                // Check if the user isn't the original owner
+                if (result.userid === targetUser.user.id) {
+                    app.commandFeedback(x.message, targetUser.user.username + " is the original owner of the event!");
+
+                    return;
+                }
+
+                // Check if user isn't of the event
+                if (result.members.indexOf(targetUser.user.id) === -1) {
+                    app.commandFeedback(x.message, targetUser.user.username + " isn't part of that event!");
+
+                    return;
+                }
+
+                // Check if user is a host
+                if (result.hosts.indexOf(targetUser.user.id) === -1) {
+                    app.commandFeedback(x.message, targetUser.user.username + " isn't a host for that event!");
+
+                    return;
+                }
+
+                let newvalues = { $pull: { hosts: targetUser.user.id } };
+
+                targetUser.removeRole(result.eventData.hostrole);
+
+                dbo.collection("events").updateOne({ name: x.name }, newvalues, function (err, res) {
+                    if (err) throw err;
+                    app.commandFeedback(x.message, targetUser.user.username + " is not a host of '" + x.name + "' anymore!", { end: true, type: 'Callback!' });
                 });
             } else {
                 app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
