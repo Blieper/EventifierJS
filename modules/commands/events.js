@@ -48,6 +48,11 @@ This will get rid of it's channels.`,
                                 channel.delete()
                             }
                         }).then(() => {
+                            let channel = guild.channels.find(val => val.id === result.eventData.descchannel)
+                            if (channel) {
+                                channel.delete()
+                            }
+                        }).then(() => {
                             let channel = guild.channels.find(val => val.id === result.eventData.voice)
                             if (channel) {
                                 channel.delete()
@@ -151,6 +156,17 @@ Automatically makes a voice, general and host channel inside a special category.
                             return guild.createChannel(x.name, 'category')
                         }).then(ch => {
                             eventData.category = ch.id;
+
+                            return guild.createChannel('description', 'text')
+                        }).then(ch => {
+                            eventData.descchannel = ch.id;
+                            ch.setParent(eventData.category);
+
+                            ch.overwritePermissions(guild.roles.find("name", "@everyone"), {
+                                SEND_MESSAGES: false
+                            })
+
+                            ch.send("```" + (x.description || " ") + "```")
 
                             return guild.createChannel('general', 'text')
                         }).then(ch => {
@@ -316,6 +332,14 @@ Automatically makes a voice, general and host channel inside a special category.
 
                                 if (x.description) {
                                     newvalues.$set.description = x.description;
+
+                                    let descchannel = guild.channels.find(val => val.id === event.eventData.descchannel);
+
+                                    descchannel.fetchMessage(descchannel.lastMessageID).then(msg => {
+                                        msg.delete();
+                                    });
+
+                                    descchannel.send("```" + (x.description || eventData.description || " ") + "```")
                                 }
 
                                 dbo.collection("events").updateOne({ name: event.name }, newvalues, function (err, res) {
