@@ -11,8 +11,7 @@ exports.init = function (app) {
             { name: "name", optional: true },
             { name: "user", optional: true },
         ],
-        description: `Deletes the specified event. 
-This will get rid of it's channels.`,
+        description: `Deletes the specified event.`,
         antispam: true
     }, x => {
         let guild = x.message.guild;
@@ -98,8 +97,8 @@ This will get rid of it's channels.`,
             { name: "color", optional: true, pattern: /#([0-9a-fA-F]{6})/g },
             { name: "description", optional: true },
         ],
-        description: `Creates an event with the name 'name'. 
-Automatically makes a voice, general and host channel inside a special category.`,
+        description: `Creates an event with the given name. 
+Automatically makes a voice, general, description and host channel inside a special category.`,
         antispam: true
     }, x => {
         let guild = x.message.guild;
@@ -362,7 +361,7 @@ Automatically makes a voice, general and host channel inside a special category.
         pars: [
             { name: "name" }
         ],
-        description: `Makes the user join the given event.`,
+        description: `Makes you join the given event.`,
         antispam: true
     }, x => {
         let guild = x.message.guild;
@@ -406,7 +405,7 @@ Automatically makes a voice, general and host channel inside a special category.
         pars: [
             { name: "name" }
         ],
-        description: `Makes the user leave the given event, if they're not the original owner.`,
+        description: `Makes you leave the given event.`,
         antispam: true
     }, x => {
         let guild = x.message.guild;
@@ -458,7 +457,7 @@ Automatically makes a voice, general and host channel inside a special category.
             { name: "name" },
             { name: "user", patten: /.* \d{4}\b/g }
         ],
-        description: `Kicks the given user from the given event.`,
+        description: `Kicks the given user from the given event. Only usable by event hosts`,
         antispam: true
     }, x => {
         let guild = x.message.guild;
@@ -534,8 +533,8 @@ Automatically makes a voice, general and host channel inside a special category.
             { name: "name" },
             { name: "user", patten: /.* \d{4}\b/g }
         ],
-        description: `Adds a host to the given event`,
-        //antispam: true
+        description: `Adds a host to the given event. Only usable by event owners.`,
+        antispam: true
     }, x => {
         let guild = x.message.guild;
         let dbo = app.db.db('eventifierjs');
@@ -610,8 +609,8 @@ Automatically makes a voice, general and host channel inside a special category.
             { name: "name" },
             { name: "user", patten: /.* \d{4}\b/g }
         ],
-        description: `Removes a host of the given event`,
-        //antispam: true
+        description: `Removes a host of the given event. Only usable by event owners.`,
+        antispam: true
     }, x => {
         let guild = x.message.guild;
         let dbo = app.db.db('eventifierjs');
