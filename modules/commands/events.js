@@ -429,6 +429,82 @@ Automatically makes a voice, general and host channel inside a special category.
         });
     });
 
+    app.registerCommand('event', 'kick', {
+        pars: [
+            { name: "name" },
+            { name: "user", patten: /.* \d{4}\b/g }
+        ],
+        description: `Kicks the given user from the given event.`,
+        antispam: true
+    }, x => {
+        let guild = x.message.guild;
+        let dbo = app.db.db('eventifierjs');
+
+        if (!guild) {
+            app.commandFeedback(x.message, "Couldn't find server. Are you doing this in a DM chat?");
+
+            return;
+        }
+        
+        let targetUser = guild.members.find(val => {
+            return val.user.username + ' ' + val.user.discriminator === x.user;
+        });
+
+        if (!targetUser) {
+            app.commandFeedback(x.message, "User not found!");
+
+            return;            
+        }
+
+        // try to find event with the same name
+        dbo.collection('events').findOne({ name: x.name }, { _id: 0, userid: 1, name: 1, eventData: 1 }, function (err, result) {
+            if (err) throw err;
+
+            if (result) {
+                let cloneQuery = { name: x.newname || x.name }
+
+                // Check if the user isn't the original owner
+                if (result.userid === targetUser.user.id) {
+                    app.commandFeedback(x.message, targetUser.user.username + " is the original owner of the event!");
+
+                    return;
+                }
+
+                // Check if user isn't of the event
+                if (result.members.indexOf(targetUser.user.id) === -1) {
+                    app.commandFeedback(x.message, targetUser.user.username + " isn't part of that event!");
+
+                    return;
+                }
+
+                // Check if user is a host
+                if (result.hosts.indexOf(x.message.author.id) === -1) {
+                    app.commandFeedback(x.message, 'Only hosts can kick users from events!');
+
+                    return;
+                }
+
+                // Check if user is a host
+                if (result.hosts.indexOf(targetUser.user.id) > -1) {
+                    app.commandFeedback(x.message, 'Hosts cannot be kicked!');
+
+                    return;
+                }
+
+                let newvalues = { $pull: { members: targetUser.user.id } };
+
+                targetUser.removeRole(result.eventData.role);
+
+                dbo.collection("events").updateOne({ name: x.name }, newvalues, function (err, res) {
+                    if (err) throw err;
+                    app.commandFeedback(x.message, targetUser.user.username + " got kicked from '" + result.name + "'!", { end: true, type: 'Callback!' });
+                });
+            } else {
+                app.commandFeedback(x.message, 'No such event found! (' + x.name + ')');
+            }
+        });
+    });
+
     app.registerCommand('event', 'addHost', {
         pars: [
             { name: "name" },
