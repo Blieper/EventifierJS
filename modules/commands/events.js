@@ -2,7 +2,7 @@ exports.init = function (app) {
 
     app.registerNamespace('event', {
         description: `This namespace is dedicated to event commands.`,
-        roles: ["Eventifier Tester"]
+        //roles: ["Eventifier Tester"]
     });
 
     app.registerCommand('event', 'delete', {
