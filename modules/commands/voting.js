@@ -75,7 +75,7 @@ exports.init = function (app) {
 
         poll.hasvoted.push(x.message.author.id);
         poll.options[foundOption].votes++;
-        app.commandFeedback(x.message, x.message.author.username + " voted for '" + poll.options[foundOption].text + "'", {end: true, type: 'Callback!'});
+        app.commandFeedback(x.message, x.message.author.username + " voted '" + poll.options[foundOption].text + "' for '" + poll.text + "'", {end: true, type: 'Callback!'});
     });
 
     app.registerCommand('vote', 'call', {
