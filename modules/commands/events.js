@@ -65,21 +65,21 @@ exports.init = function (app) {
                             let role = guild.roles.get(result.eventData.role);
                             if (role) {
                                 role.delete()
-                                app.commandFeedback(x.message, 'Deleting role...', { type: "Callback!" });
+                                //app.commandFeedback(x.message, 'Deleting role...', { type: "Callback!" });
                             }
                         }).then(() => {
                             let role = guild.roles.get(result.eventData.hostrole);
                             if (role) {
                                 role.delete()
-                                app.commandFeedback(x.message, 'Deleting host role...', { type: "Callback!" });
+                                //app.commandFeedback(x.message, 'Deleting host role...', { type: "Callback!" });
                             }
                         }).then(() => {
-                            app.commandFeedback(x.message, 'Successfully deleted channels! (' + result.name + ')', { type: "Callback!" });
+                            //app.commandFeedback(x.message, 'Successfully deleted channels! (' + result.name + ')', { type: "Callback!" });
 
                             dbo.collection("events").deleteOne({ name: result.name }, function (err, obj) {
                                 if (err) throw err;
 
-                                app.commandFeedback(x.message, 'Successfully deleted event from database!', { end: true, type: "Callback!" });
+                                app.commandFeedback(x.message, 'Successfully deleted event!', { end: true, type: "Callback!" });
                             });
                         }).catch(err => {
                             app.commandFeedback(x.message, 'Error while deleting channels (' + result.name + ')');
@@ -338,11 +338,13 @@ Automatically makes a voice, general, description and host channel inside a spec
 
                                     let descchannel = guild.channels.find(val => val.id === event.eventData.descchannel);
 
-                                    descchannel.fetchMessage(descchannel.lastMessageID).then(msg => {
-                                        msg.delete();
-                                    });
+                                    async function clear() {
+                                        const fetched = await descchannel.fetchMessages({limit: 99});
+                                        descchannel.bulkDelete(fetched);
+                                        descchannel.send("```" + (x.description || eventData.description || " ") + "```");
+                                    }
 
-                                    descchannel.send("```" + (x.description || eventData.description || " ") + "```")
+                                    clear();
                                 }
 
                                 dbo.collection("events").updateOne({ name: event.name }, newvalues, function (err, res) {
@@ -472,7 +474,7 @@ Automatically makes a voice, general, description and host channel inside a spec
 
             return;
         }
-        
+
         let targetUser = guild.members.find(val => {
             return val.user.username + ' ' + val.user.discriminator === x.user;
         });
@@ -480,7 +482,7 @@ Automatically makes a voice, general, description and host channel inside a spec
         if (!targetUser) {
             app.commandFeedback(x.message, "User not found!");
 
-            return;            
+            return;
         }
 
         // try to find event with the same name
@@ -556,7 +558,7 @@ Automatically makes a voice, general, description and host channel inside a spec
         if (!targetUser) {
             app.commandFeedback(x.message, "User not found!");
 
-            return;            
+            return;
         }
 
         // try to find event with the same name
@@ -624,7 +626,7 @@ Automatically makes a voice, general, description and host channel inside a spec
 
             return;
         }
-        
+
         let targetUser = guild.members.find(val => {
             return val.user.username + ' ' + val.user.discriminator === x.user;
         });
@@ -632,7 +634,7 @@ Automatically makes a voice, general, description and host channel inside a spec
         if (!targetUser) {
             app.commandFeedback(x.message, "User not found!");
 
-            return;            
+            return;
         }
 
         // try to find event with the same name
