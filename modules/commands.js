@@ -67,6 +67,7 @@ exports.init = function (app) {
         cmdset.whitelist = settings.whitelist || [];
         cmdset.useSingleString = true;
         cmdset.roles = settings.roles || [];
+        cmdset.lazypars = settings.lazypars || false;
 
         if (app.namespaces[namespace].commands[command].pars !== undefined) {
             cmdset.useSingleString = false;
@@ -164,7 +165,7 @@ exports.init = function (app) {
                         if (!command.settings.useSingleString) {
                             try {
                                 // Quote elements in string
-                                argsJSONString = argsJSONString.replace(/(```(.|\n)*```)|([^,\s:][\w\d\s\'\"]*[^:,])/g, function (x) {
+                                argsJSONString = argsJSONString.replace(/(```(.|\n)*```)|([^,\s:][\w\d\s\'\"]*[^:,])|\d/g, function (x) {
                                     let ret = '"' + x + '"';
                                     return ret;
                                 });
@@ -193,21 +194,23 @@ exports.init = function (app) {
                                 let pars = command.pars;
 
                                 // Check for pars that are not meant to be there
-                                for (i of Object.keys(json)) {
-                                    let exists = false;
+                                if (!command.settings.lazypars) {
+                                    for (i of Object.keys(json)) {
+                                        let exists = false;
 
-                                    for (par of pars) {
-                                        let name = par.name;
+                                        for (par of pars) {
+                                            let name = par.name;
 
-                                        if (name === i) {
-                                            exists = true;
-                                            break;
+                                            if (name === i) {
+                                                exists = true;
+                                                break;
+                                            }
                                         }
-                                    }
 
-                                    if (!exists) {
-                                        app.commandFeedback(message, "Unexpected argument found: '" + i + "'");
-                                        return;
+                                        if (!exists) {
+                                            app.commandFeedback(message, "Unexpected argument found: '" + i + "'");
+                                            return;
+                                        }
                                     }
                                 }
 
@@ -278,7 +281,8 @@ exports.init = function (app) {
             }
         }
     }
-
+    
+    require('./commands/voting.js').init(app);
     require('./commands/events.js').init(app);
     require('./commands/main.js').init(app);
 
