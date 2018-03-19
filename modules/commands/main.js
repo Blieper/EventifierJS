@@ -1,7 +1,7 @@
 exports.init = function (app) {
 
     app.registerNamespace ('std', {
-        roles: ['Eventifier Tester'],
+        //roles: ['Eventifier Tester'],
         description: `Standard functions`
     });
 

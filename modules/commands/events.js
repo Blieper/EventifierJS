@@ -165,6 +165,10 @@ Automatically makes a voice, general, description and host channel inside a spec
                                 SEND_MESSAGES: false
                             })
 
+                            ch.overwritePermissions(guild.roles.find("name", "User"), {
+                                SEND_MESSAGES: false
+                            })
+
                             ch.send("```" + (x.description || " ") + "```")
 
                             return guild.createChannel('general', 'text')
