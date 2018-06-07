@@ -284,6 +284,7 @@ exports.init = function (app) {
     
     require('./commands/voting.js').init(app);
     require('./commands/events.js').init(app);
+    require('./commands/fun.js').init(app);
     require('./commands/main.js').init(app);
 
 }
