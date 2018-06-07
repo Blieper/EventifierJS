@@ -16,4 +16,4 @@ client.on('message', message => {
     app.checkCommands(message);
 });
 
-client.login(process.env.IP.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN);
