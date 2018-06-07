@@ -11,6 +11,7 @@ exports.init = function (app) {
         description:
             `Rolls a 6 sided dice. Number of sides can also be changed`
     }, x => {
+        console.log(x.sides);
         let sides = 6 || Math.max(x.sides,1);
 
         let number = Math.ceil(Math.random() * sides);
