@@ -5,18 +5,28 @@ exports.init = function (app) {
     });
 
     app.registerCommand('fun', 'rtd', {
-        pars: [
-            { name: 'sides', optional: true },
-        ],
+        pars: [],
         description:
-            `Rolls a 6 sided dice. Number of sides can also be changed`
+            `Rolls a 6 sided dice.`
     }, x => {
-        console.log(x.sides);
-        let sides = 6 || Math.max(x.sides,1);
+        let sides = 6;
 
         let number = Math.ceil(Math.random() * sides);
 
         app.commandFeedback(x.message, "Result: " + number, {type: 'Rolling a dice!'});
+        return
+    });
+
+    app.registerCommand('fun', 'd10', {
+        pars: [],
+        description:
+            `Rolls a 10 sided dice.`
+    }, x => {
+        let sides = 10;
+
+        let number = Math.ceil(Math.random() * sides);
+
+        app.commandFeedback(x.message, "Result: " + number, {type: 'Rolling a d10!'});
         return
     });
 } 
