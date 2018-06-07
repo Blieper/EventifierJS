@@ -15,9 +15,7 @@ exports.init = function (app) {
 
         let number = Math.ceil(Math.random * sides);
 
-        if (poll.hasvoted.indexOf(x.message.author.id) > -1) {
-            app.commandFeedback(x.message, "Result: " + number, {type: 'Rolling a dice!'});
-            return
-        }
+        app.commandFeedback(x.message, "Result: " + number, {type: 'Rolling a dice!'});
+        return
     });
 }
