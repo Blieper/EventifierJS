@@ -16,4 +16,4 @@ client.on('message', message => {
     app.checkCommands(message);
 });
 
-client.login('NDA5MDYxNTIyNTE4ODM1MjAw.DYskAA.9ybs1_qApvuf7tFIoRPOYHTSAmg');
+client.login(process.env.IP.BOT_TOKEN);
