@@ -13,9 +13,9 @@ exports.init = function (app) {
     }, x => {
         let sides = 6 || Math.max(x.sides,1);
 
-        let number = Math.ceil(Math.random * sides);
+        let number = Math.ceil(Math.random() * sides);
 
         app.commandFeedback(x.message, "Result: " + number, {type: 'Rolling a dice!'});
         return
     });
-}
+} 
